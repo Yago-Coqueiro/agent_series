@@ -147,7 +147,7 @@ You will be called again with this:
 Observation: Título: Severance
 imdbID: tt11972234
 Sinopse: Mark leads a team of office workers whose memories have been surgically divided between their work and personal lives.
-Ano: 2022–
+Ano: 2022-
 Status: 2 temporadas
 Gêneros: Drama, Mystery, Sci-Fi, Thriller
 IMDb: 8.7/10
@@ -188,7 +188,7 @@ class Agent:
 
 def agent_loop(max_iterations, system, query):
     # system_instruction injeta o system prompt em todas as chamadas sem poluir o histórico
-    model = genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=system)
+    model = genai.GenerativeModel(model_name="gemini-3.1-flash-lite-preview", system_instruction=system)
     agent = Agent(model, system)
     # nomes das funções disponíveis para despacho dinâmico
     tools = ["buscar_serie", "buscar_elenco", "buscar_episodios_da_temporada", "calcular_tempo_de_maratona"]
