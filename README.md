@@ -26,7 +26,7 @@ Exemplos de perguntas que o agente sabe responder:
 | `buscar_episodios_da_temporada` | Lista episódios e notas do IMDb de uma temporada específica | Permite explorar o conteúdo temporada a temporada, útil para comparações |
 | `calcular_tempo_de_maratona` | Calcula o tempo total de maratona em minutos, horas e dias | Ferramenta local (sem API) que mostra que nem toda ação precisa de chamada externa |
 
-Todas as ferramentas recebem exatamente **um argumento do tipo string**, conforme exigido pelo mecanismo de despacho via `eval`. As que precisam de dois parâmetros recebem tudo em uma string e fazem o split internamente.
+Todas as ferramentas recebem exatamente **um argumento do tipo string**, pois o mecanismo de despacho extrai nome e argumento via regex do texto gerado pelo modelo. As que precisam de dois parâmetros recebem tudo em uma string e fazem o split internamente.
 
 ---
 
@@ -58,7 +58,13 @@ pip install -r requirements.txt
 
 ### 4. Configure as chaves de API no arquivo `.env`
 
-Abra o arquivo `.env` e substitua os valores:
+Copie o arquivo de exemplo e preencha com suas chaves:
+
+```bash
+cp .env.example .env
+```
+
+Abra o `.env` gerado e substitua os valores:
 
 ```env
 GEMINI_API_KEY=sua_chave_aqui
@@ -87,6 +93,8 @@ Digite sua pergunta sobre séries e pressione Enter. Para encerrar, digite `sair
 
 **Formato de mensagens do Gemini:** a principal diferença em relação à OpenAI API é que o Gemini usa `"model"` no lugar de `"assistant"` e `"parts"` (lista) no lugar de `"content"` (string). Errar esse formato gera erros ou respostas inesperadas. O `system_instruction` também vai no construtor do modelo, não como mensagem no histórico.
 
-**Ferramentas com um único argumento string:** o mecanismo de despacho via `eval` obriga todas as ferramentas a receberem exatamente uma string. Ferramentas que precisam de dois parâmetros (como `buscar_episodios_da_temporada`) fazem o parse internamente com `split(",")`. Isso funcionou bem, mas exige que o prompt instrua o modelo a formatar o argumento corretamente.
+**Ferramentas com um único argumento string:** o mecanismo de despacho usa um dicionário `TOOLS` que mapeia o nome da ferramenta à função Python correspondente, eliminando o uso de `eval` e o risco de execução arbitrária de código. Como o nome e o argumento são extraídos via regex do texto do modelo, todas as ferramentas recebem exatamente uma string. Ferramentas que precisam de dois parâmetros (como `buscar_episodios_da_temporada`) fazem o parse internamente com `split(",")`. Isso exige que o prompt instrua o modelo a formatar o argumento corretamente.
+
+**Memória entre perguntas:** o objeto `Agent` é criado uma única vez antes do loop de perguntas, mantendo o histórico de mensagens (`self.messages`) acumulado durante toda a sessão. Criar um novo `Agent` a cada pergunta zeraria o contexto, fazendo o modelo perder a referência ao que foi dito anteriormente.
 
 **Consistência do modelo ao seguir o formato:** o maior desafio foi fazer o LLM respeitar sempre o padrão `Action: ferramenta: argumento\nPAUSE`. A chave foi incluir um exemplo concreto no system prompt e ser explícito sobre o `PAUSE` obrigatório após cada ação — sem ele, o agente tenta responder sem esperar a Observation.
